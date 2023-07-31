@@ -70,23 +70,39 @@ class UndefinedCommand(Exception):
     pass
 
 def help():
-    print("HELP")
+    print("Vestel Control CLI")
+    print("Usage: "+sys.argv[0]+" [-h] [TV IP] (optional)[COMMAND]")
+    print(" -h - Show this help")
 
 def main(argv):
-    argvlen = len(argv)
-    if argvlen < 1:
+    try:
+        optlist, args = getopt.getopt(argv, 'h')
+    except getopt.GetoptError as err:
+        sys.stderr.write(str(err)+"\n")
+        sys.exit(1)
+
+    for o, a in optlist:
+        if o == "-h":
+            help()
+            sys.exit(0)
+        else:
+            sys.stderr.write("Unknown option: "+str(o)+"\n")
+            sys.exit(1)
+
+    argslen = len(args)
+    if argslen < 1:
         sys.stderr.write("Address not specified\n")
         sys.exit(1)
 
-    if argvlen > 2:
-        sys.stderr.write("Too many arguments\n\n")
+    if argslen > 2:
+        sys.stderr.write("Too many arguments\n")
         sys.exit(1)
 
-    address = (argv[0], 4660)
+    address = (args[0], 4660)
     command = None
 
-    if argvlen == 2:
-        command = argv[1]
+    if argslen == 2:
+        command = args[1]
 
     if command is not None:
         try:
@@ -97,6 +113,9 @@ def main(argv):
 
         sys.exit(0)
 
+    print("Commands:")
+    print("help - list controls")
+    print("quit - exit program")
     while True:
         command = input("> ")
 
