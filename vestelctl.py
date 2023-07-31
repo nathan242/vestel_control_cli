@@ -88,12 +88,9 @@ def main(argv):
     if argvlen == 2:
         command = argv[1]
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    connect(sock, address)
-
     if command is not None:
         try:
-            send(sock, address, command)
+            send(address, command)
         except UndefinedCommand as ex:
             sys.stderr.write(ex.args[0]+"\n")
             sys.exit(1)
@@ -111,7 +108,7 @@ def main(argv):
             list_controls()
         else:
             try:
-                send(sock, address, command)
+                send(address, command)
             except UndefinedCommand as ex:
                 print(ex.args[0])
 
@@ -122,15 +119,17 @@ def list_controls():
         print(item[0]+" => "+str(item[1]))
 
 def connect(sock, address):
-    print("Connecting to "+address[0]+":"+str(address[1])+" ...")
-
     try:
         sock.connect(address)
     except:
         sys.stderr.write("Cannot connect to "+address[0]+":"+str(address[1])+"\n")
         sys.exit(2)
 
-def send(sock, address, command):
+def disconnect(sock):
+    sock.shutdown(socket.SHUT_RDWR)
+    sock.close()
+
+def send(address, command):
     if (command not in controls):
         raise UndefinedCommand("Command "+command+" not known")
 
@@ -138,13 +137,13 @@ def send(sock, address, command):
 
     while sent == 0:
         try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            connect(sock, address)
             sent = sock.send(bytes(str(controls[command])+"\n", 'utf-8'))
         except BrokenPipeError:
-            connect(sock, address)
-            continue
+            pass
 
-        if sent == 0:
-            connect(sock, address)
+        disconnect(sock)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
